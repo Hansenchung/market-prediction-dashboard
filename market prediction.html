@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f7fa">
+  <title>Northstar — Market outlook</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #182230;
+      --muted: #718096;
+      --line: #e8edf2;
+      --surface: #fff;
+      --canvas: #f5f7fa;
+      --nav: #17253b;
+      --blue: #3b6df6;
+      --blue-soft: #edf2ff;
+      --green: #16845b;
+      --green-soft: #eaf6f0;
+      --red: #c85555;
+      --red-soft: #fdf0ef;
+      --shadow: 0 2px 10px rgba(25, 42, 65, .035);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--canvas); color: var(--ink); font-size: 14px; }
+    button, select { font: inherit; }
+    button { cursor: pointer; }
+    .app { min-height: 100vh; }
+    .sidebar {
+      background: var(--nav); color: #c4cedc; width: 228px; position: fixed;
+      inset: 0 auto 0 0; display: flex; flex-direction: column; padding: 24px 15px;
+    }
+    .brand { display: flex; gap: 11px; align-items: center; color: #fff; font-size: 17px; font-weight: 700; letter-spacing: -.4px; padding: 0 11px 34px; }
+    .brand-mark { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 9px; background: #5278fa; color: #fff; }
+    .nav-label { color: #8493a8; text-transform: uppercase; font-size: 10px; font-weight: 700; letter-spacing: 1.1px; padding: 0 12px; margin: 12px 0 9px; }
+    .nav-item { display: flex; align-items: center; gap: 12px; color: #b8c4d4; text-decoration: none; padding: 11px 12px; border-radius: 8px; margin: 2px 0; font-size: 13px; }
+    .nav-item svg { width: 17px; height: 17px; opacity: .85; }
+    .nav-item.active { background: #293a55; color: #fff; }
+    .sidebar-bottom { margin-top: auto; }
+    .profile { display: flex; gap: 10px; align-items: center; border-top: 1px solid #304057; padding: 19px 7px 2px; }
+    .avatar { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: #273a5a; background: #d8e2f3; font-weight: 700; font-size: 12px; }
+    .profile-name { color: #fff; font-size: 12px; font-weight: 600; }
+    .profile-plan { color: #91a0b4; font-size: 11px; margin-top: 3px; }
+    .main { margin-left: 228px; min-height: 100vh; }
+    .topbar { background: #fff; border-bottom: 1px solid var(--line); height: 68px; padding: 0 36px; display: flex; align-items: center; justify-content: space-between; }
+    .crumb { font-size: 13px; color: var(--muted); }
+    .crumb strong { color: var(--ink); font-weight: 600; }
+    .top-actions { display: flex; align-items: center; gap: 16px; }
+    .market-status { display: flex; align-items: center; gap: 7px; font-size: 12px; color: #64748b; }
+    .live-dot { width: 7px; height: 7px; background: #21a276; border-radius: 50%; }
+    .icon-button { border: 1px solid var(--line); background: #fff; color: #607087; border-radius: 8px; width: 35px; height: 35px; display: grid; place-items: center; }
+    .content { max-width: 1440px; margin: 0 auto; padding: 30px 36px 40px; }
+    .page-heading { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 23px; }
+    h1 { font-size: 24px; letter-spacing: -.7px; margin: 0 0 6px; }
+    .subtitle { font-size: 13px; color: var(--muted); }
+    .updated { color: var(--muted); font-size: 11px; margin-top: 4px; text-align: right; }
+    .grid { display: grid; grid-template-columns: minmax(0, 1fr) 306px; gap: 18px; align-items: start; }
+    .left-column, .right-column { display: grid; gap: 18px; }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 11px; box-shadow: var(--shadow); }
+    .card-head { display: flex; justify-content: space-between; align-items: center; padding: 19px 21px 0; }
+    .card-title { margin: 0; font-size: 14px; font-weight: 650; letter-spacing: -.15px; }
+    .eyebrow { color: var(--muted); font-size: 11px; margin-top: 4px; }
+    .select-wrap { position: relative; }
+    select { appearance: none; border: 1px solid var(--line); border-radius: 7px; background: #fff; color: #334155; padding: 8px 32px 8px 10px; font-size: 12px; outline-color: #93abff; }
+    .select-wrap:after { content: "⌄"; position: absolute; right: 11px; top: 6px; pointer-events: none; color: #718096; }
+    .chart-card { overflow: hidden; }
+    .asset-heading { padding: 21px 21px 13px; display: flex; justify-content: space-between; align-items: flex-start; }
+    .asset-title { display: flex; align-items: center; gap: 11px; }
+    .asset-icon { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; font-size: 12px; font-weight: 750; color: #3261d5; background: #edf2ff; }
+    .asset-name { font-size: 14px; font-weight: 650; }
+    .asset-symbol { font-size: 11px; color: var(--muted); margin-top: 3px; }
+    .price-block { text-align: right; }
+    .price { font-size: 22px; letter-spacing: -.5px; font-weight: 670; }
+    .price-change { font-size: 11px; color: var(--green); margin-top: 3px; }
+    .chart-tools { border-top: 1px solid #f1f3f6; display: flex; justify-content: space-between; align-items: center; padding: 11px 21px 0; }
+    .legend { display: flex; gap: 15px; align-items: center; color: var(--muted); font-size: 10px; }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .legend i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--blue); }
+    .legend .market-dot { background: #aeb8c8; }
+    .legend .forecast-dot { width: 10px; height: 0; border-top: 2px dashed #6686f7; border-radius: 0; background: transparent; }
+    .periods { display: flex; gap: 3px; }
+    .period { background: transparent; color: var(--muted); border: 0; padding: 5px 8px; border-radius: 5px; font-size: 10px; }
+    .period.active { color: var(--blue); background: var(--blue-soft); font-weight: 650; }
+    .chart { padding: 4px 12px 10px; height: 210px; }
+    .chart svg { width: 100%; height: 100%; overflow: visible; }
+    .chart-label { fill: #9aa6b6; font-size: 9px; font-family: inherit; }
+    .chart-grid { stroke: #edf0f4; stroke-width: 1; }
+    .forecast-card { padding-bottom: 17px; }
+    .forecast-top { padding: 18px 21px 14px; display: flex; justify-content: space-between; align-items: center; }
+    .forecast-badge { color: #4564b8; background: #eff3ff; border-radius: 20px; padding: 6px 9px; font-size: 10px; font-weight: 650; }
+    .forecast-body { margin: 0 21px; padding: 15px; background: #f8faff; border: 1px solid #edf1fb; border-radius: 9px; display: flex; align-items: center; gap: 18px; }
+    .probability { width: 81px; height: 81px; flex: 0 0 auto; border-radius: 50%; background: conic-gradient(#5278f6 0 56%, #e5eaf5 56% 100%); display: grid; place-items: center; position: relative; }
+    .probability:before { content: ""; background: #f8faff; border-radius: 50%; width: 66px; height: 66px; position: absolute; }
+    .probability strong { position: relative; font-size: 18px; letter-spacing: -.5px; }
+    .forecast-copy { flex: 1; min-width: 0; }
+    .direction { font-size: 14px; font-weight: 650; }
+    .direction span { color: var(--green); }
+    .forecast-copy p { color: #718096; font-size: 11px; line-height: 1.5; margin: 5px 0 0; }
+    .forecast-range { color: #66758a; font-size: 11px; text-align: right; white-space: nowrap; }
+    .forecast-range strong { display: block; color: var(--ink); font-size: 13px; margin-top: 5px; }
+    .signal-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 13px 21px 0; }
+    .signal-stat { padding: 11px 12px; border: 1px solid #edf0f4; border-radius: 8px; }
+    .signal-stat span { display: block; color: var(--muted); font-size: 10px; }
+    .signal-stat strong { display: block; font-size: 13px; font-weight: 650; margin-top: 6px; }
+    .signal-stat .positive { color: var(--green); }
+    .drivers { padding: 0 21px 18px; }
+    .driver { margin-top: 15px; }
+    .driver-label { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 7px; }
+    .driver-label span:last-child { color: var(--muted); }
+    .bar { height: 5px; background: #eef1f5; border-radius: 8px; overflow: hidden; }
+    .bar i { display: block; height: 100%; background: #6686f7; border-radius: inherit; }
+    .driver:nth-child(3) .bar i { background: #54aa89; }
+    .driver:nth-child(4) .bar i { background: #e2a755; }
+    .watchlist { overflow: hidden; }
+    .watchlist .card-head { padding-bottom: 15px; }
+    .watchlist-count { color: var(--muted); font-size: 10px; }
+    .watch-row { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; text-align: left; border: 0; border-top: 1px solid #f0f2f5; background: #fff; padding: 12px 17px; color: var(--ink); }
+    .watch-row:hover, .watch-row.selected { background: #f7f9ff; }
+    .watch-left { display: flex; align-items: center; gap: 9px; }
+    .mini-icon { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 8px; font-size: 9px; font-weight: 750; background: #f1f3f7; color: #536277; }
+    .watch-name { font-size: 11px; font-weight: 650; }
+    .watch-symbol { color: var(--muted); font-size: 10px; margin-top: 3px; }
+    .watch-right { text-align: right; align-self: center; }
+    .watch-price { font-size: 11px; font-weight: 600; }
+    .watch-change { font-size: 10px; margin-top: 3px; }
+    .up { color: var(--green); }
+    .down { color: var(--red); }
+    .view-all { display: block; padding: 12px; text-align: center; color: var(--blue); text-decoration: none; font-size: 11px; font-weight: 600; border-top: 1px solid #f0f2f5; }
+    .market-card { padding-bottom: 2px; }
+    .market-row { padding: 13px 18px; border-top: 1px solid #f0f2f5; display: flex; align-items: center; justify-content: space-between; }
+    .market-row:first-of-type { margin-top: 14px; }
+    .market-name { font-size: 11px; font-weight: 600; }
+    .market-sub { font-size: 10px; color: var(--muted); margin-top: 3px; }
+    .market-value { text-align: right; font-size: 11px; font-weight: 600; }
+    .market-value small { display: block; font-size: 10px; margin-top: 3px; font-weight: 500; }
+    .company-table-wrap { overflow-x: auto; padding: 0 21px 18px; }
+    .company-table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: left; }
+    .company-table th, .company-table td { padding: 11px 10px; border-top: 1px solid #f0f2f5; white-space: nowrap; }
+    .company-table th { color: var(--muted); font-size: 10px; font-weight: 600; }
+    .company-table td:first-child { color: var(--muted); }
+    .company-table td:nth-child(2) { font-weight: 600; }
+    .company-table-note { color: var(--muted); font-size: 10px; line-height: 1.5; margin: 0; padding: 0 21px 17px; }
+    .disclaimer { color: #8995a5; text-align: center; font-size: 10px; padding: 19px 10px 0; line-height: 1.6; }
+    @media (max-width: 1080px) {
+      .sidebar { width: 74px; padding: 22px 10px; }
+      .brand { justify-content: center; padding: 0 0 31px; }
+      .brand-word, .nav-label, .nav-item span, .profile-details { display: none; }
+      .nav-item { justify-content: center; padding: 12px 0; }
+      .nav-item svg { width: 19px; height: 19px; }
+      .profile { justify-content: center; padding-inline: 0; }
+      .main { margin-left: 74px; }
+      .grid { grid-template-columns: minmax(0, 1fr) 270px; }
+      .content { padding-inline: 24px; }
+      .topbar { padding-inline: 24px; }
+    }
+    @media (max-width: 760px) {
+      .sidebar { width: 100%; height: 58px; inset: auto 0 0; z-index: 5; padding: 5px 10px; flex-direction: row; justify-content: space-around; }
+      .brand, .sidebar-bottom, .nav-label { display: none; }
+      .sidebar nav { width: 100%; display: flex; justify-content: space-around; }
+      .nav-item { width: 48px; margin: 0; }
+      .main { margin: 0 0 58px; }
+      .topbar { height: 56px; padding: 0 17px; }
+      .content { padding: 22px 15px 28px; }
+      .grid { grid-template-columns: 1fr; }
+      .right-column { grid-row: 1; }
+      .page-heading { margin-bottom: 17px; }
+      .market-status { display: none; }
+      .asset-heading { padding-inline: 16px; }
+      .chart-tools { padding-inline: 16px; }
+      .card-head { padding-inline: 16px; }
+      .forecast-top { padding-inline: 16px; }
+      .forecast-body { margin-inline: 16px; gap: 12px; padding: 12px; }
+      .forecast-range { white-space: normal; min-width: 80px; }
+      .signal-row { margin-inline: 16px; gap: 7px; }
+      .signal-stat { padding: 10px 8px; }
+      .drivers { padding-inline: 16px; }
+      .watch-row { padding-inline: 15px; }
+      .chart { height: 190px; }
+    }
+    @media (max-width: 420px) {
+      h1 { font-size: 21px; }
+      .subtitle { max-width: 230px; line-height: 1.4; }
+      .updated { max-width: 110px; line-height: 1.5; }
+      .forecast-body { flex-wrap: wrap; }
+      .forecast-range { margin-left: 93px; text-align: left; }
+      .probability { width: 72px; height: 72px; }
+      .probability:before { width: 59px; height: 59px; }
+      .probability strong { font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 17 9 12l3 3 8-9M14 6h6v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <span class="brand-word">northstar</span>
+      </div>
+      <div class="nav-label">Workspace</div>
+      <nav aria-label="Main navigation">
+        <a class="nav-item active" href="#" aria-current="page"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.7"/><rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.7"/></svg><span>Overview</span></a>
+        <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M4 19V5m0 14h16M7 15l4-5 3 3 5-7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Predictions</span></a>
+        <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16M8 4v4m8 2v4m-5 2v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span>Watchlists</span></a>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="nav-label">Preferences</div>
+        <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/><path d="m19.4 15 .1.1 1.1.9-1.1 1.9-1.4-.5a8 8 0 0 1-1.5.9l-.3 1.5h-2.2l-.4-1.5a8 8 0 0 1-1.5-.9l-1.4.5-1.1-1.9 1.1-.9a7 7 0 0 1 0-1.8l-1.1-.9 1.1-1.9 1.4.5a8 8 0 0 1 1.5-.9l.4-1.5h2.2l.3 1.5a8 8 0 0 1 1.5.9l1.4-.5 1.1 1.9-1.1.9a7 7 0 0 1 0 1.7Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" transform="translate(-1 -1)"/></svg><span>Settings</span></a>
+        <div class="profile">
+          <div class="avatar">JD</div>
+          <div class="profile-details"><div class="profile-name">Jordan Davis</div><div class="profile-plan">Research plan</div></div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="crumb">Workspace <span aria-hidden="true">/</span> <strong>Overview</strong></div>
+        <div class="top-actions">
+          <div class="market-status"><i class="live-dot"></i> US market closed</div>
+          <button class="icon-button" id="refreshButton" aria-label="Refresh sample data" title="Refresh timestamp">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M20 7v5h-5M4 17v-5h5m10-1a7 7 0 0 0-12-4L4 12m16 0-3 5a7 7 0 0 1-12-1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="content">
+        <div class="page-heading">
+          <div><h1>Market outlook</h1><div class="subtitle">A clear view of the next trading session.</div></div>
+          <div class="updated" id="updatedAt">Sample values · awaiting market data</div>
+        </div>
+        <p id="marketDataStatus" role="status" style="margin:-12px 0 18px;color:var(--muted);font-size:11px">Loading live daily OHLCV data for AAPL…</p>
+
+        <div class="grid">
+          <section class="left-column" aria-label="Selected stock analysis">
+            <article class="card chart-card">
+              <div class="asset-heading">
+                <div class="asset-title">
+                  <div class="asset-icon" id="assetIcon">A</div>
+                  <div><div class="asset-name" id="assetName">Apple Inc.</div><div class="asset-symbol" id="assetSymbol">NASDAQ · AAPL</div></div>
+                </div>
+                <div class="price-block"><div class="price" id="assetPrice">$227.48</div><div class="price-change" id="assetChange">+$2.13 (0.94%) today</div></div>
+              </div>
+              <div class="chart-tools">
+                <div class="legend"><span id="assetLegend"><i></i> AAPL · indexed</span><span><i class="forecast-dot"></i> 7-session trend projection</span></div>
+                <div class="periods" aria-label="Chart period">
+                  <button class="period" data-period="1W">1W</button><button class="period active" data-period="1M">1M</button><button class="period" data-period="3M">3M</button>
+                </div>
+              </div>
+              <div class="chart"><svg id="priceChart" viewBox="0 0 720 190" role="img" aria-label="Illustrative historical stock prices with a trend projection"></svg></div>
+            </article>
+
+            <article class="card forecast-card">
+              <div class="forecast-top">
+                <div><h2 class="card-title">Trend outlook</h2><div class="eyebrow">Simple linear projection of recent closing prices</div></div>
+                <div class="forecast-badge" id="forecastBadge">Illustrative data</div>
+              </div>
+              <div class="forecast-body">
+                <div class="probability" id="probabilityRing"><strong id="probabilityValue">↑</strong></div>
+                <div class="forecast-copy"><div class="direction">Trend projects <span id="directionText">upward</span></div><p id="forecastSummary">Sample data only. This is an illustrative trend line, not a live forecast.</p></div>
+                <div class="forecast-range">Projected 7-session change<strong id="returnRange">—</strong></div>
+              </div>
+              <div class="signal-row">
+                <div class="signal-stat"><span>Latest bar</span><strong id="latestBarDate">Sample</strong></div>
+                <div class="signal-stat"><span>Recent volatility</span><strong id="volatility">Sample</strong></div>
+                <div class="signal-stat"><span>Data interval</span><strong>Daily</strong></div>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="card-head"><div><h2 class="card-title">What is influencing the signal?</h2><div class="eyebrow">Illustrative feature contributions</div></div></div>
+              <div class="drivers">
+                <div class="driver"><div class="driver-label"><span>Price momentum</span><span id="momentumLabel">Positive</span></div><div class="bar"><i id="momentumBar" style="width:72%"></i></div></div>
+                <div class="driver"><div class="driver-label"><span>Market trend</span><span id="marketLabel">Positive</span></div><div class="bar"><i id="marketBar" style="width:61%"></i></div></div>
+                <div class="driver"><div class="driver-label"><span>Volume activity</span><span id="volumeLabel">Neutral</span></div><div class="bar"><i id="volumeBar" style="width:48%"></i></div></div>
+              </div>
+            </article>
+          </section>
+
+          <aside class="right-column" aria-label="Watchlist and market summary">
+            <article class="card watchlist">
+              <div class="card-head"><div><h2 class="card-title">Watchlist</h2><div class="eyebrow">Sample quotes · select to load live bars</div></div><span class="watchlist-count">4 assets</span></div>
+              <div id="watchRows"></div>
+              <a class="view-all" href="#" id="viewAll">View watchlist <span aria-hidden="true">→</span></a>
+            </article>
+            <article class="card market-card">
+              <div class="card-head"><div><h2 class="card-title">Market snapshot</h2><div class="eyebrow">Illustrative daily indicators</div></div><div class="select-wrap"><select aria-label="Market region"><option>United States</option></select></div></div>
+              <div class="market-row"><div><div class="market-name">S&amp;P 500</div><div class="market-sub">SPX · Broad market</div></div><div class="market-value">5,842.47<small class="up">+0.42%</small></div></div>
+              <div class="market-row"><div><div class="market-name">NASDAQ</div><div class="market-sub">IXIC · Tech-heavy</div></div><div class="market-value">18,421.31<small class="up">+0.68%</small></div></div>
+              <div class="market-row"><div><div class="market-name">Russell 2000</div><div class="market-sub">RUT · Small cap</div></div><div class="market-value">2,118.64<small class="down">−0.16%</small></div></div>
+            </article>
+            <div class="disclaimer">For research and educational purposes only. Sample figures are illustrative and are not investment advice or live market data.</div>
+          </aside>
+        </div>
+        <article class="card" style="margin-top:18px">
+          <div class="card-head">
+            <div><h2 class="card-title">Forbes Global 2000 · Top 20</h2><div class="eyebrow">Company rankings and financial figures from the supplied 2026 CSV</div></div>
+          </div>
+          <div class="company-table-wrap">
+            <table class="company-table">
+              <thead><tr><th scope="col">Rank</th><th scope="col">Company</th><th scope="col">Headquarters</th><th scope="col">Industry</th><th scope="col">Sales</th><th scope="col">Profit</th><th scope="col">Assets</th><th scope="col">Market value</th></tr></thead>
+              <tbody id="companyRows"></tbody>
+            </table>
+          </div>
+          <p class="company-table-note">Figures are reproduced as supplied in the CSV and have not been independently verified. This company-ranking data is separate from the illustrative stock chart and trend projection above.</p>
+        </article>
+      </div>
+    </main>
+  </div>
+  <script>
+    const stocks = {
+      AAPL: { name: "Apple Inc.", exchange: "NASDAQ", price: 227.48, change: 0.94, probability: 56, range: "−1.2% to +1.8%", volatility: "1.42%", values: [42,45,43,49,47,50,46,54,53,57,52,60,58,63,61,59,67,66,70,68,73,69,75,78,74,80,77,83,81,87], color: "#3261d5" },
+      MSFT: { name: "Microsoft Corp.", exchange: "NASDAQ", price: 428.76, change: 0.38, probability: 53, range: "−1.0% to +1.4%", volatility: "1.08%", values: [49,47,51,48,53,52,50,54,57,55,59,56,60,58,63,61,62,65,63,68,67,65,70,72,69,74,72,76,75,78], color: "#1675bc" },
+      NVDA: { name: "NVIDIA Corp.", exchange: "NASDAQ", price: 139.91, change: -1.12, probability: 48, range: "−2.1% to +1.7%", volatility: "2.36%", values: [78,81,75,82,73,77,68,72,66,74,70,64,71,62,69,60,65,58,66,57,62,54,61,56,63,52,59,55,61,53], color: "#75a642" },
+      AMZN: { name: "Amazon.com Inc.", exchange: "NASDAQ", price: 187.83, change: 0.71, probability: 54, range: "−1.5% to +1.9%", volatility: "1.67%", values: [48,51,50,54,52,57,55,53,60,58,63,59,62,65,61,67,64,68,65,70,68,73,71,69,76,73,78,75,81,79], color: "#dc8b30" }
+    };
+    const periods = { "1W": 7, "1M": 20, "3M": 30 };
+    const forecastHorizon = 7;
+    const liveBarsBySymbol = Object.create(null);
+    const companies = [
+      [1, "JPMorganChase", "New York, United States", "Banking", "$284.79 B", "$58.63 B", "$4.9 T", "$797.99 B"],
+      [2, "Amazon", "Seattle, United States", "Retail and Wholesale", "$742.78 B", "$90.8 B", "$916.63 B", "$2.84 T"],
+      [3, "Berkshire Hathaway", "Omaha, United States", "Insurance", "$375.39 B", "$72.47 B", "$1.25 T", "$1.04 T"],
+      [4, "Alphabet", "Mountain View, United States", "IT Software & Services", "$423.17 B", "$160.21 B", "$703.92 B", "$4.81 T"],
+      [5, "Saudi Arabian Oil Company (Saudi Aramco)", "Dhahran, Saudi Arabia", "Oil & Gas Operations", "$455.53 B", "$99.3 B", "$709.36 B", "$1.79 T"],
+      [6, "ICBC", "Beijing, China", "Banking", "$210.26 B", "$51.27 B", "$8.07 T", "$313.62 B"],
+      [7, "Bank of America", "Charlotte, United States", "Banking", "$195 B", "$31.82 B", "$3.5 T", "$353.2 B"],
+      [7, "Microsoft", "Redmond, United States", "IT Software & Services", "$318.27 B", "$125.22 B", "$694.23 B", "$3.13 T"],
+      [9, "China Construction Bank", "Beijing, China", "Banking", "$192.27 B", "$48.16 B", "$6.82 T", "$293.34 B"],
+      [10, "Agricultural Bank of China", "Beijing, China", "Banking", "$196.08 B", "$39.2 B", "$7.39 T", "$272.65 B"],
+      [11, "Apple", "Cupertino, United States", "Technology Hardware & Equipment", "$451.44 B", "$122.58 B", "$371.08 B", "$4.41 T"],
+      [12, "Bank of China", "Beijing, China", "Banking", "$173.78 B", "$34.53 B", "$5.73 T", "$196.26 B"],
+      [13, "HSBC Holdings", "London, United Kingdom", "Banking", "$133.58 B", "$21.09 B", "$3.31 T", "$303.63 B"],
+      [14, "ExxonMobil", "Spring, United States", "Oil & Gas Operations", "$329.32 B", "$25.31 B", "$464.41 B", "$654.57 B"],
+      [15, "Samsung Electronics", "Suwon-si, South Korea", "Technology Hardware & Equipment", "$272.56 B", "$58.49 B", "$413.5 B", "$1.17 T"],
+      [16, "Meta Platforms", "Menlo Park, United States", "IT Software & Services", "$214.96 B", "$70.59 B", "$395.25 B", "$1.56 T"],
+      [17, "Toyota Motor", "Toyota, Japan", "Consumer Durables", "$336.35 B", "$25.54 B", "$663.29 B", "$253.53 B"],
+      [18, "Citigroup", "New York, United States", "Banking", "$173.86 B", "$15.84 B", "$2.78 T", "$211.65 B"],
+      [19, "Goldman Sachs Group", "New York, United States", "Diversified Financials", "$129.01 B", "$18.07 B", "$2.06 T", "$279.81 B"],
+      [20, "Wells Fargo", "San Francisco, United States", "Banking", "$125.95 B", "$21.7 B", "$2.21 T", "$224.68 B"]
+    ];
+    let selected = "AAPL";
+    let activePeriod = "1M";
+    let latestRequest = 0;
+
+    function renderCompanyTable() {
+      document.getElementById("companyRows").innerHTML = companies.map(company =>
+        `<tr>${company.map(value => `<td>${value}</td>`).join("")}</tr>`
+      ).join("");
+    }
+
+    function renderWatchlist() {
+      const rows = Object.entries(stocks).map(([symbol, stock]) => {
+        const changeClass = stock.change >= 0 ? "up" : "down";
+        const changeText = `${stock.change >= 0 ? "+" : ""}${stock.change.toFixed(2)}%`;
+        return `<button class="watch-row ${symbol === selected ? "selected" : ""}" data-symbol="${symbol}" aria-pressed="${symbol === selected}">
+          <span class="watch-left"><span class="mini-icon" style="color:${stock.color};background:${stock.color}15">${symbol.slice(0, 1)}</span>
+          <span><span class="watch-name">${stock.name}</span><span class="watch-symbol">${symbol}</span></span></span>
+          <span class="watch-right"><span class="watch-price">$${stock.price.toFixed(2)}</span><span class="watch-change ${changeClass}">${changeText}</span></span>
+        </button>`;
+      }).join("");
+      document.getElementById("watchRows").innerHTML = rows;
+      document.querySelectorAll(".watch-row").forEach(row => {
+        row.addEventListener("click", () => {
+          selected = row.dataset.symbol;
+          render();
+          loadMarketData(selected);
+        });
+      });
+    }
+
+    function projectTrend(values, horizon) {
+      const logValues = values.map(Math.log);
+      const count = logValues.length;
+      const meanX = (count - 1) / 2;
+      const meanY = logValues.reduce((sum, value) => sum + value, 0) / count;
+      let numerator = 0;
+      let denominator = 0;
+
+      for (let i = 0; i < count; i++) {
+        numerator += (i - meanX) * (logValues[i] - meanY);
+        denominator += (i - meanX) ** 2;
+      }
+
+      const slope = numerator / denominator;
+      return Array.from({ length: horizon }, (_, i) =>
+        Math.exp(meanY + slope * (count + i - meanX))
+      );
+    }
+
+    function drawChart(stock) {
+      const svg = document.getElementById("priceChart");
+      const count = periods[activePeriod];
+      const bars = liveBarsBySymbol[selected];
+      const rawValues = bars ? bars.slice(-count).map(bar => bar.close) : stock.values.slice(-count);
+      const values = bars
+        ? rawValues.map(value => value / rawValues[0] * 100)
+        : rawValues.map(value => 100 + (value / rawValues[0] - 1) * 5);
+      const projection = projectTrend(values, forecastHorizon);
+      const width = 720, height = 190, left = 38, right = 12, top = 12, bottom = 24;
+      const allValues = [...values, ...projection];
+      const min = Math.min(...allValues) - 0.75, max = Math.max(...allValues) + 0.75;
+      const totalPoints = values.length + forecastHorizon;
+      const x = i => left + i * (width - left - right) / (totalPoints - 1);
+      const y = value => top + (max - value) * (height - top - bottom) / (max - min);
+      const points = values.map((v, i) => `${x(i)},${y(v)}`).join(" ");
+      const forecastPoints = [values[values.length - 1], ...projection]
+        .map((v, i) => `${x(values.length - 1 + i)},${y(v)}`).join(" ");
+      const area = `${left},${height - bottom} ${points} ${x(values.length - 1)},${height - bottom}`;
+      let grid = "";
+      for (let i = 0; i < 4; i++) {
+        const gy = top + i * (height - top - bottom) / 3;
+        const label = (max - i * (max - min) / 3).toFixed(0);
+        grid += `<line class="chart-grid" x1="${left}" y1="${gy}" x2="${width - right}" y2="${gy}"></line><text class="chart-label" x="3" y="${gy + 3}">${label}</text>`;
+      }
+      const xLabels = bars
+        ? [bars[Math.max(0, bars.length - count)].timestamp, bars[Math.max(0, bars.length - Math.ceil(count * 2 / 3))].timestamp, bars[Math.max(0, bars.length - Math.ceil(count / 3))].timestamp, bars[bars.length - 1].timestamp]
+        : activePeriod === "1W" ? ["Mon", "Tue", "Wed", "Thu", "Fri"] : activePeriod === "1M" ? ["Sep 9", "Sep 16", "Sep 23", "Sep 30"] : ["Jul", "Aug", "Sep", "Oct"];
+      const historicalWidth = x(values.length - 1) - left;
+      const labels = xLabels.map((label, i) => `<text class="chart-label" text-anchor="${i === 0 ? "start" : i === xLabels.length - 1 ? "end" : "middle"}" x="${left + i * historicalWidth / (xLabels.length - 1)}" y="${height - 5}">${label}</text>`).join("");
+      const forecastStart = x(values.length - 1);
+      document.getElementById("assetLegend").innerHTML = `<i></i> ${selected} · indexed`;
+      svg.innerHTML = `<defs><linearGradient id="fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="${stock.color}" stop-opacity=".15"/><stop offset="100%" stop-color="${stock.color}" stop-opacity="0"/></linearGradient></defs>
+        ${grid}<polygon points="${area}" fill="url(#fill)"/><polyline points="${points}" fill="none" stroke="${stock.color}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="${forecastStart}" y1="${top}" x2="${forecastStart}" y2="${height - bottom}" stroke="#cbd5e1" stroke-dasharray="3 4"/><polyline points="${forecastPoints}" fill="none" stroke="${stock.color}" stroke-width="2.2" stroke-dasharray="5 4" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="${left}" y1="${height - bottom}" x2="${width - right}" y2="${height - bottom}" stroke="#e8edf2"/>${labels}<text class="chart-label" text-anchor="end" x="${width - right}" y="${height - 5}">+${forecastHorizon} sessions</text>`;
+    }
+
+    function render() {
+      const stock = stocks[selected];
+      const bars = liveBarsBySymbol[selected];
+      document.getElementById("assetIcon").textContent = selected.slice(0, 1);
+      document.getElementById("assetIcon").style.color = stock.color;
+      document.getElementById("assetName").textContent = stock.name;
+      document.getElementById("assetSymbol").textContent = `${stock.exchange} · ${selected}`;
+      const latest = bars && bars[bars.length - 1];
+      const previous = bars && bars[bars.length - 2];
+      const price = latest ? latest.close : stock.price;
+      const change = latest && previous ? (latest.close / previous.close - 1) * 100 : stock.change;
+      document.getElementById("assetPrice").textContent = `$${price.toFixed(2)}`;
+      document.getElementById("assetChange").textContent = `${change >= 0 ? "+" : "−"}$${(price * Math.abs(change) / 100).toFixed(2)} (${Math.abs(change).toFixed(2)}%) today`;
+      const selectedBars = bars ? bars.slice(-periods[activePeriod]) : null;
+      const displayValues = selectedBars
+        ? selectedBars.map(bar => bar.close / selectedBars[0].close * 100)
+        : stock.values.slice(-periods[activePeriod]).map((value, index, values) => 100 + (value / values[0] - 1) * 5);
+      const projection = projectTrend(displayValues, forecastHorizon);
+      const projectedChange = (projection[projection.length - 1] / displayValues[displayValues.length - 1] - 1) * 100;
+      const trendUp = projectedChange >= 0;
+      document.getElementById("probabilityValue").textContent = `${projectedChange >= 0 ? "+" : ""}${projectedChange.toFixed(2)}%`;
+      document.getElementById("probabilityValue").style.fontSize = "13px";
+      document.getElementById("probabilityRing").style.background = `conic-gradient(${trendUp ? "#5278f6" : "#dc7770"} 0 100%, #e5eaf5 100% 100%)`;
+      document.getElementById("directionText").textContent = Math.abs(projectedChange) < 0.05 ? "sideways" : trendUp ? "upward" : "downward";
+      document.getElementById("directionText").style.color = Math.abs(projectedChange) < 0.05 ? "var(--muted)" : trendUp ? "var(--green)" : "var(--red)";
+      document.getElementById("forecastSummary").textContent = bars
+        ? `Log-linear regression on the selected historical closes projects ${projectedChange >= 0 ? "+" : ""}${projectedChange.toFixed(2)}% over ${forecastHorizon} sessions. This is a simple extrapolation, not a reliable or guaranteed forecast.`
+        : "Sample data only. This illustrative trend line is not a live forecast.";
+      document.getElementById("returnRange").textContent = `${projectedChange >= 0 ? "+" : ""}${projectedChange.toFixed(2)}%`;
+      const recentBars = bars ? bars.slice(-21) : [];
+      const returns = recentBars.slice(1).map((bar, i) => bar.close / recentBars[i].close - 1);
+      const meanReturn = returns.length ? returns.reduce((sum, value) => sum + value, 0) / returns.length : 0;
+      const dailyVolatility = returns.length ? Math.sqrt(returns.reduce((sum, value) => sum + (value - meanReturn) ** 2, 0) / returns.length) * 100 : null;
+      document.getElementById("volatility").textContent = dailyVolatility === null ? "Sample" : `${dailyVolatility.toFixed(2)}%`;
+      document.getElementById("latestBarDate").textContent = latest ? latest.timestamp : "Sample";
+      document.getElementById("forecastBadge").textContent = bars ? "Alpha Vantage · daily" : "Illustrative data";
+      const momentum = Math.max(28, Math.min(82, 45 + (stock.probability - 50) * 3));
+      document.getElementById("momentumBar").style.width = `${momentum}%`;
+      document.getElementById("momentumLabel").textContent = momentum >= 55 ? "Positive" : "Mixed";
+      document.getElementById("marketBar").style.width = `${stock.change >= 0 ? 61 : 39}%`;
+      document.getElementById("marketLabel").textContent = stock.change >= 0 ? "Positive" : "Mixed";
+      document.getElementById("volumeBar").style.width = `${48 + Math.round(Math.abs(stock.change) * 8)}%`;
+      drawChart(stock);
+      renderWatchlist();
+    }
+
+    async function loadMarketData(symbol) {
+      const request = ++latestRequest;
+      const status = document.getElementById("marketDataStatus");
+      status.textContent = `Loading Alpha Vantage daily OHLCV bars for ${symbol}…`;
+      try {
+        const response = await fetch(`/api/bars?symbol=${encodeURIComponent(symbol)}`, { cache: "no-store" });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || `Market data service returned ${response.status}.`);
+        if (!Array.isArray(result.bars) || result.bars.length < 2) throw new Error("Market data service returned fewer than two daily bars.");
+        const validBars = result.bars.every(bar =>
+          /^\d{4}-\d{2}-\d{2}$/.test(bar.timestamp) &&
+          ["open", "high", "low", "close", "volume"].every(field => Number.isFinite(bar[field]))
+        );
+        if (!validBars) throw new Error("Market data service returned invalid OHLCV fields.");
+        const retrievedAt = new Date(result.retrievedAt);
+        if (Number.isNaN(retrievedAt.getTime())) throw new Error("Market data service returned an invalid retrieval timestamp.");
+        if (request !== latestRequest) return;
+        liveBarsBySymbol[symbol] = result.bars;
+        const lastBar = result.bars[result.bars.length - 1];
+        const timestamp = retrievedAt.toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+        document.getElementById("updatedAt").textContent = `Daily bars · Retrieved ${timestamp}`;
+        status.textContent = `${symbol} · Alpha Vantage daily OHLCV · ${result.bars.length} bars · latest bar ${lastBar.timestamp}. Refresh to check for updates.`;
+        render();
+      } catch (error) {
+        if (request !== latestRequest) return;
+        status.textContent = `Live data unavailable for ${symbol}: ${error.message} Sample values are shown; the chart is not live.`;
+      }
+    }
+
+    document.querySelectorAll(".period").forEach(button => {
+      button.addEventListener("click", () => {
+        activePeriod = button.dataset.period;
+        document.querySelectorAll(".period").forEach(item => item.classList.toggle("active", item === button));
+        drawChart(stocks[selected]);
+      });
+    });
+    document.getElementById("refreshButton").addEventListener("click", () => {
+      loadMarketData(selected);
+    });
+    document.getElementById("viewAll").addEventListener("click", event => event.preventDefault());
+    renderCompanyTable();
+    render();
+    loadMarketData(selected);
+  </script>
+</body>
+</html>
